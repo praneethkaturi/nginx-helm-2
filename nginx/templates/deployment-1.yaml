@@ -1,0 +1,40 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Values.helmChartTwo.nginx.name }}
+  namespace: argocd-test
+  labels:
+    {{- include "hello-world.labels" . | nindent 4 }}
+spec:
+  replicas: {{ .Values.helmChartTwo.nginx.replicaCount }}
+  selector:
+    matchLabels:
+      {{- include "hello-world.selectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+      labels:
+        {{- include "hello-world.selectorLabels" . | nindent 8 }}
+    spec:
+      serviceAccountName: {{ include "hello-world.serviceAccountName" . }}
+      containers:
+        - name: {{ .Chart.Name }}
+          image: "{{ .Values.helmChartTwo.image.repository }}:{{ .Values.helmChartTwo.image.tag | default .Chart.AppVersion }}"
+          imagePullPolicy: {{ .Values.helmChartTwo.image.pullPolicy }}
+          ports:
+            - name: http
+              containerPort: 80
+              protocol: TCP
+          volumeMounts:
+            - mountPath: /etc/nginx/conf.d/
+              name: nginx-dir
+            - mountPath: /var/cache/nginx/client_temp
+              name: nginx-empty
+            - mountPath: /var/run/
+              name: nginx-run
+      volumes:
+        - name: nginx-dir
+          emptyDir: { }
+        - name: nginx-empty
+          emptyDir: { }
+        - name: nginx-run
+          emptyDir: { }
